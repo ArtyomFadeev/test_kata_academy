@@ -13,12 +13,14 @@ import (
 // Римские цифры и их значения
 var romanNumerals = map[string]int{
 	"I": 1, "IV": 4, "V": 5, "IX": 9, "X": 10,
+	"XL": 40, "L": 50, "XC": 90, "C": 100,
 }
 
 var arabicToRoman = []struct {
 	Value   int
 	Numeral string
 }{
+	{100, "C"}, {90, "XC"}, {50, "L"}, {40, "XL"},
 	{10, "X"}, {9, "IX"}, {5, "V"}, {4, "IV"}, {1, "I"},
 }
 
