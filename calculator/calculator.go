@@ -2,6 +2,7 @@ package calculator
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -9,47 +10,26 @@ import (
 // Calculate parses and calculates the result of the given expression
 func Calculate(expression string) (string, error) {
 	// Remove spaces
-	expression = strings.ReplaceAll(expression, " ", "")
+	expression = strings.TrimSpace(expression)
 
-	// Parse the expression
-	var str1, str2 string
-	var num int
-	var operator string
-
-	// Detect operation type
-	if strings.Contains(expression, "+") {
-		operator = "+"
-	} else if strings.Contains(expression, "-") {
-		operator = "-"
-	} else if strings.Contains(expression, "*") {
-		operator = "*"
-	} else if strings.Contains(expression, "/") {
-		operator = "/"
-	} else {
-		return "", fmt.Errorf("unsupported operation")
-	}
-
-	// Split the expression
-	parts := strings.Split(expression, operator)
-	if len(parts) != 2 {
+	// Regular expression to match the expression pattern
+	re := regexp.MustCompile(`^\"([^\"]{1,10})\"\s*([\+\-\*/])\s*(\"([^\"]{1,10})\"|([1-9]|10))$`)
+	matches := re.FindStringSubmatch(expression)
+	if matches == nil {
 		return "", fmt.Errorf("invalid expression format")
 	}
 
-	// Trim quotes and validate
-	str1 = strings.Trim(parts[0], "\"")
-	if len(str1) > 10 {
-		return "", fmt.Errorf("first string is too long")
-	}
+	str1 := matches[1]
+	operator := matches[2]
+	var str2 string
+	var num int
+	var err error
 
-	if operator == "+" || operator == "-" {
-		str2 = strings.Trim(parts[1], "\"")
-		if len(str2) > 10 {
-			return "", fmt.Errorf("second string is too long")
-		}
+	if matches[4] != "" {
+		str2 = matches[4]
 	} else {
-		var err error
-		num, err = strconv.Atoi(parts[1])
-		if err != nil || num < 1 || num > 10 {
+		num, err = strconv.Atoi(matches[5])
+		if err != nil {
 			return "", fmt.Errorf("invalid number")
 		}
 	}
@@ -59,10 +39,17 @@ func Calculate(expression string) (string, error) {
 	case "+":
 		return str1 + str2, nil
 	case "-":
-		return strings.ReplaceAll(str1, str2, ""), nil
+		if strings.Contains(str1, str2) {
+			return strings.ReplaceAll(str1, str2, ""), nil
+		} else {
+			return str1, nil
+		}
 	case "*":
 		return strings.Repeat(str1, num), nil
 	case "/":
+		if num <= 0 || num > len(str1) {
+			return "", fmt.Errorf("invalid division")
+		}
 		partLen := len(str1) / num
 		return str1[:partLen], nil
 	}
